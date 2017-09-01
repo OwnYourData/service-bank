@@ -15,9 +15,15 @@ library(RSelenium)
 library(methods)
 library(jsonlite)
 
-# read credentials from command line
+# read credentials from command line or stdin
 args <- commandArgs(trailingOnly=TRUE)
-input <- args[1]
+if (length(args) == 0){
+        con <- file("stdin")
+        input <- suppressWarnings(readLines(con))
+        close(con)
+} else {
+        input <- args[1]
+}
 
 username <- ''
 password <- ''
@@ -27,26 +33,26 @@ if(validate(input)){
         ji <- fromJSON(input)
         username <- ji$username
         password <- ji$password
-        account <- ji$account
+        account <- ji$iban
 } else {
         stop('invalid JSON input')
 }
 if (is.null(username)){
         stop('invalid username')
 } else if (username == ''){
-        stop('invalid username')
+        stop('invalid or missing username')
 }
 if (is.null(password)){
         stop('invalid password')
 } else if (password == ''){
-        stop('invalid password')
+        stop('invalid or missing password')
 }
 if (is.null(account)){
-        stop('invalid account')
+        stop('invalid iban')
 } else if (account == ''){
-        stop('missing account')
+        stop('missing iban')
 } else if (nchar(account) != 20){
-        stop('invalid account format')
+        stop('unrecognized iban format')
 }
 account <- paste(substring(account, seq(1, 20, 4), seq(4, 20, 4)), 
                  collapse = ' ')
@@ -237,10 +243,10 @@ accountElement <- tryCatch({
                 remDr$findElement("partial link text", account) 
         }) }, error = function(e) { 'unknown' }) 
 if(class(accountElement) != "webElement"){
-        stop('invalid credentials or account')
+        stop('invalid credentials or iban')
 }
 if(accountElement$getElementText()[[1]] != account){
-        stop('account for credentials missing')
+        stop('iban for credentials missing')
 }
 accountElement$clickElement()
 
