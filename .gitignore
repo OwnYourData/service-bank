@@ -32,5 +32,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
+# Samples
+docker/srv-bank/sample
+
 # OSX
 .DS_Store

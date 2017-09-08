@@ -42,7 +42,7 @@ RUN echo "deb http://cloud.r-project.org/bin/linux/ubuntu xenial/" >> /etc/apt/s
 USER seluser
 
 COPY script/run.sh /bin/run.sh
-COPY script/autoLoad.R /srv-bank/autoLoad.R
+COPY script/*.R /srv-bank/
 
 EXPOSE 4444
 
