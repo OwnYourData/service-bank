@@ -11,7 +11,8 @@ idb_parser <- function(raw){
         amount <- str2num(soll) + -1*str2num(haben)
         
         other <- list(iban = iban,
-                      currency = currency)
+                      currency = currency,
+                      original = desc)
         line <- list(date        = valutaDate,
                      description = desc,
                      amount      = amount,
