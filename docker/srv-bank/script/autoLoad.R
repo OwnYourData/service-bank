@@ -15,6 +15,7 @@
 library(RSelenium)
 library(methods)
 library(jsonlite)
+library(xml2)
 
 # read credentials from command line or stdin
 localExecute <- FALSE
@@ -57,6 +58,7 @@ bank <- ''
 username <- ''
 password <- ''
 account <- ''
+accountNo <- 0
 
 if(validate(input)){
         ji <- fromJSON(input)
@@ -131,6 +133,7 @@ switch(bank,
                remDr$findElement("id", "lof5")$sendKeysToElement(list(username))
                remDr$findElement("id", "lof9")$sendKeysToElement(list(password))
                remDr$findElement("link text", "Login")$clickElement()
+
                accountElement <- tryCatch({ 
                        suppressMessages({ 
                                remDr$findElement("partial link text", account) 
@@ -141,6 +144,19 @@ switch(bank,
                if(accountElement$getElementText()[[1]] != account){
                        stop('account for credentials missing')
                }
+               
+               pageSource <- remDr$getPageSource()
+               pageDOM <- read_html(unlist(pageSource))
+               accountNode <- xml_find_first(pageDOM, 
+                                             '//*[text()[contains(.,"AT92 1420 0200 1134 1463")]]')
+               parentNode <- xml_parent(xml_parent(xml_parent(accountNode)))
+               for (item in 2:(length(xml_children(parentNode))-1)){
+                       if(grepl(account, 
+                                as.character(xml_child(parentNode,item)))){
+                               accountNo <- item-2
+                       }
+               }
+               
                accountElement$clickElement()
                
                # download URL
@@ -203,23 +219,51 @@ switch(bank,
                         'Cookie' = paste0('st=', cookies[[1]]$value),
                         'Connection' = 'keep-alive',
                         'DNT' = '1')
-               curl::handle_setopt(h, copypostfields = "svc=EASYBANK&d=transactions&pagenumber=1&submitflag=true&suppressOverlay=true&print=false&csv=true&accountChanged=false&newSearch=false&sortingColumn=BOOKING_DATE&sortingDirection=-1&lastviewed=&outstandingBalance=&searchPanelShown=false&initialRowsPerPage=30&konto=0&datefrom=&datetill=&betvon=&centsvon=&betbis=&centsbis=&buchungstext=&umsatzart=-1&enlargementOfTransaction=0&rowsPerPage=30")
+               curl::handle_setopt(h, copypostfields = paste0(
+                        'svc=EASYBANK&',
+                        'd=transactions&',
+                        'pagenumber=1&',
+                        'submitflag=true&',
+                        'suppressOverlay=true&',
+                        'print=false&',
+                        'csv=true&',
+                        'accountChanged=false&',
+                        'newSearch=false&',
+                        'sortingColumn=BOOKING_DATE&',
+                        'sortingDirection=-1&',
+                        'lastviewed=&',
+                        'outstandingBalance=&',
+                        'searchPanelShown=false&',
+                        'initialRowsPerPage=30&',
+                        'konto=', accountNo, '&',
+                        'datefrom=&',
+                        'datetill=&',
+                        'betvon=&',
+                        'centsvon=&',
+                        'betbis=&',
+                        'centsbis=&',
+                        'buchungstext=&',
+                        'umsatzart=-1&',
+                        'enlargementOfTransaction=0&',
+                        'rowsPerPage=30'))
        },
        ingdiba={
-               dfc <- do.call(rbind, lapply(cookies, data.frame, stringAsFactors=FALSE))
+               dfc <- do.call(rbind, 
+                              lapply(cookies, data.frame, 
+                                     stringAsFactors=FALSE))
                curl::handle_setheaders(h,
-                                       'Pragma' = 'no-cache',
-                                       'DNT' = '1',
-                                       'Accept-Encoding' = 'gzip, deflate, br',
-                                       'Accept-Language' = 'en-US,en;q=0.8,de;q=0.6',
-                                       'Upgrade-Insecure-Requests' = '1',
-                                       'User-Agent' = userAgentStr,
-                                       'Accept' = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                                       'Cache-Control' = 'no-cache',
-                                       'Referer' = 'https://banking.ing-diba.at/online-banking/wicket/wicket/page?0',
-                                       'Cookie' = paste(apply(dfc[, c('name', 'value')], 1, 
-                                                              paste, collapse='='), collapse='; '),
-                                       'Connection' = 'keep-alive')
+                       'Pragma' = 'no-cache',
+                       'DNT' = '1',
+                       'Accept-Encoding' = 'gzip, deflate, br',
+                       'Accept-Language' = 'en-US,en;q=0.8,de;q=0.6',
+                       'Upgrade-Insecure-Requests' = '1',
+                       'User-Agent' = userAgentStr,
+                       'Accept' = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                       'Cache-Control' = 'no-cache',
+                       'Referer' = 'https://banking.ing-diba.at/online-banking/wicket/wicket/page?0',
+                       'Cookie' = paste(apply(dfc[, c('name', 'value')], 1, 
+                                              paste, collapse='='), collapse='; '),
+                       'Connection' = 'keep-alive')
        },
        {
                stop('invalid bank')
