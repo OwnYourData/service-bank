@@ -57,7 +57,6 @@ bank <- ''
 username <- ''
 password <- ''
 account <- ''
-balanceRepoName <- ''
 
 if(validate(input)){
         ji <- fromJSON(input)
@@ -156,7 +155,6 @@ switch(bank,
                balanceList <- unlist(strsplit(unlist(balanceElement), ' '))
                balanceValue <- str2num(balanceList[1])
                balanceCurrency <- balanceList[2]
-               balanceRepoName <- "Easybank Referenzwert"
        },
        ingdiba={
                # navgiate to download
@@ -178,7 +176,6 @@ switch(bank,
                                                    balanceXpath)$getElementText()
                balanceValue <- str2num(unlist(balanceElement)[1])
                balanceCurrency <- 'EUR'
-               balanceRepoName <- "ING-DiBa Referenzwert"
        },
        {
                stop('invalid bank')
@@ -261,8 +258,8 @@ bookings <- Filter(length, bookings)
 balance <- list(balance  = balanceValue,
                 date     = as.character(Sys.Date()),
                 currency = balanceCurrency)
-balance$`_oydRepoName` <- balanceRepoName
 jsonResult <- list(
         balance  = list(balance),
         bookings = bookings)
+
 toJSON(jsonResult, pretty = TRUE, auto_unbox = TRUE)
