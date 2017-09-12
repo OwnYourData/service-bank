@@ -17,8 +17,7 @@ idb_parser <- function(raw){
                      description = desc,
                      amount      = amount,
                      other       = other)
-        line$`_oydRepoName` <- 'ING-DiBa Umsatzliste'
-        
+
         # return value
         if(is.na(amount)){
                 NULL

@@ -178,7 +178,6 @@ eb_parser <- function(raw){
                      description = trimws(gsub('\\s+', ' ', desc1)),
                      amount      = amount,
                      other       = other)
-        line$`_oydRepoName` <- 'Easybank Umsatzliste'
 
         # return value
         line
