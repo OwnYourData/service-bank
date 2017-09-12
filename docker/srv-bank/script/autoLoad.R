@@ -16,24 +16,48 @@ library(RSelenium)
 library(methods)
 library(jsonlite)
 
-source('/srv-bank/helper.R')
-source('/srv-bank/easybank.R')
-source('/srv-bank/ingdiba.R')
-
 # read credentials from command line or stdin
+localExecute <- FALSE
 args <- commandArgs(trailingOnly=TRUE)
 if (length(args) == 0){
         myStdin <- file("stdin")
         input <- suppressWarnings(readLines(myStdin))
         close(myStdin)
 } else {
-        input <- args[1]
+        if(lengths(args) == 1){
+                if(args[1] == '-l'){
+                        localExecute <- TRUE
+                        myStdin <- file("stdin")
+                        input <- suppressWarnings(readLines(myStdin))
+                        close(myStdin)
+                } else {
+                        input <- args[1]
+                }
+        } else {
+                if(args[1] == '-l'){
+                        localExecute <- TRUE
+                        input <- args[2]
+                } else {
+                        stop('ungültige argumente')
+                }
+        }
 }
+
+
+if(localExecute){
+        srcPath <- '/Users/christoph/oyd/service-bank/docker/srv-bank/script/'
+} else {
+        srcPath <- '/srv-bank/'
+}
+source(paste0(srcPath, 'helper.R'))
+source(paste0(srcPath, 'easybank.R'))
+source(paste0(srcPath, 'ingdiba.R'))
 
 bank <- ''
 username <- ''
 password <- ''
 account <- ''
+balanceRepoName <- ''
 
 if(validate(input)){
         ji <- fromJSON(input)
@@ -90,12 +114,18 @@ switch(bank,
        })
 
 # access website
-remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4444L)
-# run local selenium: docker run -d -p 4445:4444 selenium/standalone-firefox:3.4.0
-#remDr <- remoteDriver(remoteServerAddr = "192.168.1.206", port = 4445L)
+remDr <- NA
+if(localExecute){
+        # run local selenium: docker run -d -p 4445:4444 selenium/standalone-firefox:3.4.0
+        remDr <- remoteDriver(remoteServerAddr = "192.168.1.206", port = 4445L)
+} else {
+        remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4444L)
+}
 remDr$open(silent = TRUE)
 remDr$navigate(bankLogin)
 # remDr$screenshot(display = TRUE)
+
+# navigate to place preparing for download and get current balance
 switch(bank,
        easybank={
                # navgiate to download
@@ -118,8 +148,16 @@ switch(bank,
                currUrl <- remDr$getCurrentUrl()[[1]]
                pageID <- tail(strsplit(currUrl, '/')[[1]],1)
                bankDownload <- paste0(bankURL, '/', pageID)
+               
+               # get current balance
+               balanceXpath <- '//*[text()[contains(.,"Kontostand")]]/following::span'
+               balanceElement <- remDr$findElement('xpath', 
+                                                   balanceXpath)$getElementText()
+               balanceList <- unlist(strsplit(unlist(balanceElement), ' '))
+               balanceValue <- str2num(balanceList[1])
+               balanceCurrency <- balanceList[2]
+               balanceRepoName <- "Easybank Referenzwert"
        },
-
        ingdiba={
                # navgiate to download
                remDr$findElement('id', 'number')$sendKeysToElement(list(username))
@@ -134,7 +172,13 @@ switch(bank,
                                       'wicket/wicket/page?0-1.IBehaviorListener.0-umsaetze&antiCache=',
                                       epochMS())
                
-
+               # get current balance
+               balanceXpath <- '//div[h3/text()[contains(.,"Kontostand")]]/following::span'
+               balanceElement <- remDr$findElement('xpath', 
+                                                   balanceXpath)$getElementText()
+               balanceValue <- str2num(unlist(balanceElement)[1])
+               balanceCurrency <- 'EUR'
+               balanceRepoName <- "ING-DiBa Referenzwert"
        },
        {
                stop('invalid bank')
@@ -205,12 +249,20 @@ result <- iconv(result, from="ISO-8859-1", to="UTF-8")
 jsonResult <- {}
 switch(bank,
        easybank={
-               jsonResult <- lapply(result, eb_parser)
+               bookings <- lapply(result, eb_parser)
        },
        ingdiba={
-               jsonResult <- lapply(result, idb_parser)
+               bookings <- lapply(result, idb_parser)
        },
        {
                stop('invalid bank')
        })
-toJSON(Filter(length, jsonResult), pretty = TRUE, auto_unbox = TRUE)
+bookings <- Filter(length, bookings)
+balance <- list(balance  = balanceValue,
+                date     = as.character(Sys.Date()),
+                currency = balanceCurrency)
+balance$`_oydRepoName` <- balanceRepoName
+jsonResult <- list(
+        balance  = list(balance),
+        bookings = bookings)
+toJSON(jsonResult, pretty = TRUE, auto_unbox = TRUE)

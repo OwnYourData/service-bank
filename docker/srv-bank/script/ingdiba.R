@@ -8,7 +8,7 @@ idb_parser <- function(raw){
         haben <- strsplit(raw, ";")[[1]][6]
         
         # calc other fields
-        amount <- str2num(soll) + -1*str2num(haben)
+        amount <- -1*str2num(soll) + str2num(haben)
         
         other <- list(iban = iban,
                       currency = currency,
@@ -17,6 +17,7 @@ idb_parser <- function(raw){
                      description = desc,
                      amount      = amount,
                      other       = other)
+        line$`_oydRepoName` <- 'ING-DiBa Umsatzliste'
         
         # return value
         if(is.na(amount)){
