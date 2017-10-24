@@ -4,7 +4,7 @@
 { while ! nc -vz localhost 4444; do sleep 1; done } &> /dev/null
 
 if [ "$#" -ne 1 ]; then
-	cat | Rscript /srv-bank/autoLoad.R
+	cat | Rscript /srv-bank/bank.R
 else
-	Rscript /srv-bank/autoLoad.R $1
+	Rscript /srv-bank/bank.R $1
 fi
