@@ -1,8 +1,9 @@
 # <img src="https://github.com/OwnYourData/app-bank/raw/master/www/app_logo.png" width="92"> Kontodownload Service
 
 Diese Service bietet den automatisierten Download aller Umsätze (= Kontobewegungen) eines Bankkontos. Folgende Banken werden derzeit unterstützt:  
-* Easybank: https://www.easybank.at/easy
-* ING-DiBa Austria: https://www.ing-diba.at/
+* Easybank: https://www.easybank.at
+* Erste Bank / Sparkasse: https://www.sparkasse.at
+* ING-DiBa Austria: https://www.ing-diba.at
 
 Kontaktiere uns (Email: support[at]ownyourdata.eu), wenn du ein Konto bei einer anderen Bank hast und ebenfalls deine Umsätze automatisiert sammeln möchtest.
 
