@@ -37,3 +37,4 @@ docker/srv-bank/sample
 
 # OSX
 .DS_Store
+.Rproj.user

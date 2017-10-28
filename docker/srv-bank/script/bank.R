@@ -82,6 +82,7 @@ source(paste0(srcPath, 'helper.R'))
 source(paste0(srcPath, 'easybank.R'))
 source(paste0(srcPath, 'ingdiba.R'))
 source(paste0(srcPath, 'erste.R'))
+source(paste0(srcPath, 'raika.R'))
 
 if(download){
         if(validate(input)){
@@ -136,6 +137,11 @@ if(download){
                },
                erste={
                        bankURL <- 'https://login.sparkasse.at/sts/oauth/authorize?response_type=token&client_id=georgeclient'
+                       bankLogin <- bankURL
+                       
+               },
+               raika={
+                       bankURL <- 'https://banking.raiffeisen.at/logincenter/login.wf'
                        bankLogin <- bankURL
                        
                },
@@ -266,6 +272,15 @@ if(download){
                        remDr$findElement('xpath', '//*[text()[contains(.,"Download")]]')$clickElement()
                        bankDownload <- 'https://api.sparkasse.at/proxy/g/api/my/transactions/export.csv?'
                },
+               raika={
+                        # navigate to login and enter credentials
+                       
+                       # check login
+                       
+                       # get current balance
+                       
+                       # navigate to download
+               },
                {
                        stop('invalid bank')
                })
@@ -387,6 +402,9 @@ if(download){
                        con <- textConnection(retVal)
                        result <- read.csv(con)
                },
+               raika={
+                       
+               },
                {
                        stop('invalid bank')
                })
@@ -402,6 +420,9 @@ if(download){
                erste={
                        remDr$findElement('id', 'submenu_settings')$clickElement()
                        remDr$findElement('id', 'menu_logout')$clickElement()
+               },
+               raika={
+                       
                },
                {
                        stop('invalid bank')
@@ -423,6 +444,9 @@ switch(bank,
        },
        erste={
                bookings <- erste_parser(result)
+       },
+       raika={
+               bookings <- lapply(result, raika_parser)
        },
        {
                stop('invalid bank')

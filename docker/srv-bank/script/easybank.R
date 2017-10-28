@@ -3,7 +3,7 @@ eb_parser <- function(raw){
         htype <- ''
         payee <- ''
         
-        # simple reading of attributes
+        # read attributes
         accountNr <- strsplit(raw, ";")[[1]][1]
         valutaDate <- strsplit(raw, ";")[[1]][3]
         bookingDate <- strsplit(raw, ";")[[1]][4]
@@ -149,20 +149,20 @@ eb_parser <- function(raw){
                 htype <- 'unknown'
         }
         
-        description <- list(id    = id,
-                            type  = htype,
-                            typeShort = type,
-                            payee = payee,
-                            desc1 = trimws(gsub('\\s+', ' ', desc1)), 
-                            desc2 = trimws(gsub('\\s+', ' ', desc2)),
-                            memo  = trimws(gsub('\\s+', ' ', memo)),
-                            original = desc)
+        # description <- list(id    = id,
+        #                     type  = htype,
+        #                     typeShort = type,
+        #                     payee = payee,
+        #                     desc1 = trimws(gsub('\\s+', ' ', desc1)), 
+        #                     desc2 = trimws(gsub('\\s+', ' ', desc2)),
+        #                     memo  = trimws(gsub('\\s+', ' ', memo)),
+        #                     original = desc)
         
-        line <- list(date  = valutaDate,
-                     bookingDate = bookingDate,
-                     description = description,
-                     amount      = amount,
-                     currency    = currency)
+        # line <- list(date  = valutaDate,
+        #              bookingDate = bookingDate,
+        #              description = description,
+        #              amount      = amount,
+        #              currency    = currency)
         
         other <- list(account = accountNr,
                       bookingDate = bookingDate,
